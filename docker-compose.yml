@@ -1,8 +1,30 @@
 version: '3.9'
 
 services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    environment:
+      - DB_NAME=mydatabase
+      - DB_USER=postgres
+      - DB_PASSWORD=12345
+
   redis:
     image: redis:latest
+    ports:
+      - "6379:6379"
+    depends_on:
+      - web
+    healthcheck:
+      test: "redis-cli ping"
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: on-failure
     expose:
       - "6379"
@@ -14,6 +36,10 @@ services:
       - .env
     expose:
       - "5432"
+    environment:
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=mydatabase
+      - POSTGRES_USER=postgres
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -48,6 +74,9 @@ services:
       - app
     env_file:
       - .env
+    environment:
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CELERY_RESULT_BACKEND: redis://localhost:6379/1
 
   celery-beat:
     build: .
@@ -62,6 +91,15 @@ services:
       - app
     env_file:
       - .env
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8001:8001"
+    depends_on:
+      - web
 
 volumes:
   pg_data:
