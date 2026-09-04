@@ -2,11 +2,11 @@ import os
 from celery import Celery
 from celery.schedules import crontab
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 app = Celery("project",
-             broker='redis://localhost:6379/0',  # URL брокера
-             backend='redis://localhost:6379/1'  # URL бэкенда
+             broker='redis://redis:6379/0',  # URL брокера
+             backend='redis://redis:6379/1'  # URL бэкенда
 )
 
 app.config_from_object("django.conf:settings", namespace="CELERY")
